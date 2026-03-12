@@ -33,38 +33,44 @@
   nav {
     position: fixed; top:0; left:0; right:0; z-index:100;
     display:flex; align-items:center; justify-content:space-between;
-    padding: 18px 48px;
+    padding: 16px 40px;
+    gap: 24px;
     background: rgba(17,17,17,0.92);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
   .nav-logo {
-    display:flex; align-items:center; gap:14px;
+    display:flex; align-items:center; gap:12px;
+    flex-shrink: 0;
   }
-  .nav-logo svg { width:42px; height:42px; }
+  .nav-logo svg { width:42px; height:42px; flex-shrink:0; }
   .nav-logo-text {
     font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    letter-spacing: 3px;
+    font-size: 10px;
+    letter-spacing: 2.5px;
     color: #fff;
     text-transform: uppercase;
     line-height: 1.5;
     white-space: nowrap;
   }
-  .nav-logo-text span { display:block; font-weight:300; color:rgba(255,255,255,0.55); font-size:9px; letter-spacing:3px; }
+  .nav-logo-text span { display:block; font-weight:300; color:rgba(255,255,255,0.55); font-size:9px; letter-spacing:2.5px; }
   nav ul {
-    display:flex; gap:36px; list-style:none;
+    display:flex; gap:24px; list-style:none;
+    flex-shrink: 1;
   }
   nav ul a {
-    font-size:11px; letter-spacing:3px; text-transform:uppercase;
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
     color:rgba(255,255,255,0.55); text-decoration:none;
     transition: color .2s;
+    white-space: nowrap;
   }
   nav ul a:hover { color:#fff; }
   .nav-cta {
-    font-size:11px; letter-spacing:3px; text-transform:uppercase;
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
     color:#fff; border:1px solid rgba(255,255,255,0.25);
-    padding:10px 22px; text-decoration:none;
+    padding:9px 18px; text-decoration:none;
+    flex-shrink: 0;
+    white-space: nowrap;
     transition: border-color .2s, background .2s;
   }
   .nav-cta:hover { background:var(--wine); border-color:var(--wine); }
@@ -486,8 +492,8 @@
       overflow:hidden;
     }
     .hero-left {
-      padding:88px 32px 52px;
-      justify-content:flex-end;
+      padding:120px 32px 52px;
+      justify-content:center;
       position:relative; z-index:2;
     }
     /* hero-right vira fundo no mobile com arraia visivel */
@@ -535,7 +541,16 @@
   @media (max-width: 560px) {
     nav { padding:14px 20px; }
 
-    .hero-left { padding:100px 24px 52px; }
+    .nav-logo-text {
+      font-size: 9px;
+      letter-spacing: 1.5px;
+    }
+    .nav-logo-text span {
+      font-size: 8px;
+      letter-spacing: 1.5px;
+    }
+
+    .hero-left { padding:110px 24px 48px; }
     h1 { font-size: clamp(40px, 11vw, 60px); }
 
     .mission-item { padding:28px 24px; }
@@ -563,7 +578,6 @@
     .footer-copy { font-size:10px; }
 
     .sede-caption { padding: 12px 20px; }
-    .nav-logo-text { display: none; }
   }
 
 </style>
@@ -671,7 +685,7 @@
     <p>Atuamos com precisão em diversas áreas do direito, sempre com abordagem estratégica.</p>
   </div>
 
-  <div class="area-item" onclick="toggleArea(this)">
+  <div class="area-item" onclick="openArea('civil')">
     <div>
       <div class="area-name">Direito Civil</div>
       <div class="area-desc">Contratos, responsabilidade civil, família e sucessões.</div>
@@ -681,7 +695,7 @@
     </div>
   </div>
 
-  <div class="area-item navy-accent" onclick="toggleArea(this)">
+  <div class="area-item navy-accent" onclick="openArea('empresarial')">
     <div>
       <div class="area-name">Direito Empresarial</div>
       <div class="area-desc">Estruturação societária, contratos comerciais e consultoria preventiva.</div>
@@ -691,7 +705,7 @@
     </div>
   </div>
 
-  <div class="area-item active" onclick="toggleArea(this)">
+  <div class="area-item" onclick="openArea('criminal')">
     <div>
       <div class="area-name">Direito Criminal</div>
       <div class="area-desc">Defesa estratégica com atuação precisa em todas as fases processuais.</div>
@@ -701,7 +715,7 @@
     </div>
   </div>
 
-  <div class="area-item" onclick="toggleArea(this)">
+  <div class="area-item" onclick="openArea('trabalhista')">
     <div>
       <div class="area-name">Direito Trabalhista</div>
       <div class="area-desc">Relações de trabalho, rescisões e litígios com foco em resultados.</div>
@@ -828,6 +842,534 @@
   <div class="footer-oab">OAB/MA XXXXX</div>
 </footer>
 
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+
+<!-- ══════════════════════════════════════════════
+     ÁREA PAGES (overlay, same-file "routing")
+══════════════════════════════════════════════ -->
+<style>
+  /* ── AREA PAGE OVERLAY ── */
+  .area-page {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--off);
+    overflow-y: auto;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(40px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .area-page.visible {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(0);
+  }
+
+  /* ── AREA PAGE NAV BAR ── */
+  .ap-nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(17,17,17,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 16px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ap-back {
+    display: flex; align-items: center; gap: 10px;
+    color: rgba(255,255,255,0.55); text-decoration: none;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    cursor: pointer; background: none; border: none;
+    transition: color .2s;
+  }
+  .ap-back:hover { color: #fff; }
+  .ap-back svg { width: 16px; height: 16px; stroke: currentColor; }
+  .ap-nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 900;
+    color: #fff; letter-spacing: 3px;
+  }
+  .ap-cta-link {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: #fff; border: 1px solid rgba(255,255,255,0.25);
+    padding: 9px 18px; text-decoration: none;
+    transition: border-color .2s, background .2s;
+  }
+  .ap-cta-link:hover { background: var(--wine); border-color: var(--wine); }
+
+  /* ── AREA PAGE HERO ── */
+  .ap-hero {
+    background: var(--dark);
+    padding: 80px 64px 72px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: end;
+    min-height: 380px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ap-hero-bg {
+    position: absolute; inset: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 320px; font-weight: 900;
+    color: rgba(123,45,62,0.07);
+    line-height: 1;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 32px;
+    pointer-events: none; user-select: none;
+    letter-spacing: -16px;
+  }
+  .ap-hero-left { position: relative; z-index: 2; }
+  .ap-hero-tag {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--light); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .ap-hero-tag::before {
+    content:''; display:block; width:32px; height:1px; background:var(--wine);
+  }
+  .ap-hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(40px, 5vw, 72px);
+    font-weight: 900; line-height: 1.05;
+    color: #fff; margin-bottom: 0;
+  }
+  .ap-hero h1 em { font-style: italic; color: var(--wine); }
+  .ap-hero-right {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .ap-hero-desc {
+    font-size: 15px; line-height: 1.8;
+    color: rgba(255,255,255,0.45);
+  }
+  .ap-hero-stats {
+    display: flex; gap: 40px;
+  }
+  .ap-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 700;
+    color: var(--wine); line-height: 1;
+  }
+  .ap-stat-label {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); margin-top: 6px;
+  }
+
+  /* ── CASOS SECTION ── */
+  .ap-casos {
+    background: var(--off);
+    padding: 80px 64px;
+  }
+  .ap-section-tag {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--navy); margin-bottom: 40px; font-weight: 500;
+  }
+  .ap-casos h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 700; line-height: 1.15;
+    color: var(--dark); margin-bottom: 48px;
+  }
+  .ap-casos h2 em { font-style: italic; color: var(--wine); }
+  .ap-casos-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .ap-caso-card {
+    padding: 36px 32px;
+    border-right: 1px solid rgba(0,0,0,0.08);
+  }
+  .ap-caso-card:last-child { border-right: none; }
+  .ap-caso-num {
+    font-size: 10px; letter-spacing: 4px; color: var(--wine);
+    text-transform: uppercase; margin-bottom: 20px; font-weight: 500;
+  }
+  .ap-caso-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--dark); margin-bottom: 12px; line-height: 1.3;
+  }
+  .ap-caso-desc {
+    font-size: 13px; line-height: 1.7; color: var(--light);
+  }
+
+  /* ── PROCESSO SECTION ── */
+  .ap-processo {
+    background: var(--dark);
+    padding: 80px 64px;
+  }
+  .ap-processo .ap-section-tag { color: var(--gold); }
+  .ap-processo h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 700; line-height: 1.15;
+    color: #fff; margin-bottom: 56px;
+  }
+  .ap-processo h2 em { font-style: italic; color: var(--wine); }
+  .ap-steps {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .ap-step {
+    padding: 40px 32px 32px;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+  }
+  .ap-step:last-child { border-right: none; }
+  .ap-step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px; font-weight: 900;
+    color: rgba(123,45,62,0.3);
+    line-height: 1; margin-bottom: 20px;
+  }
+  .ap-step-title {
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+    color: #fff; margin-bottom: 12px; font-weight: 500;
+  }
+  .ap-step-desc {
+    font-size: 13px; line-height: 1.7;
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* ── AREA PAGE CTA ── */
+  .ap-cta-section {
+    background: var(--wine);
+    padding: 80px 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 48px;
+  }
+  .ap-cta-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 3.5vw, 48px);
+    font-weight: 700; line-height: 1.15;
+    color: #fff; margin-bottom: 0;
+  }
+  .ap-cta-section h2 em { font-style: italic; color: rgba(255,255,255,0.6); }
+  .ap-cta-section p {
+    font-size: 15px; line-height: 1.7;
+    color: rgba(255,255,255,0.6);
+    max-width: 360px;
+  }
+  .ap-cta-btn {
+    background: #fff; color: var(--wine);
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    padding: 18px 40px; text-decoration: none; border: none; cursor: pointer;
+    flex-shrink: 0;
+    transition: background .2s, color .2s;
+  }
+  .ap-cta-btn:hover { background: var(--dark); color: #fff; }
+
+  /* ── RESPONSIVE area pages ── */
+  @media (max-width: 900px) {
+    .ap-nav { padding: 14px 24px; }
+    .ap-cta-link { display: none; }
+    .ap-hero { grid-template-columns: 1fr; gap: 32px; padding: 56px 32px 52px; min-height: auto; }
+    .ap-hero-bg { font-size: 160px; }
+    .ap-casos { padding: 56px 32px; }
+    .ap-casos-grid { grid-template-columns: 1fr; }
+    .ap-caso-card { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.08); }
+    .ap-caso-card:last-child { border-bottom: none; }
+    .ap-processo { padding: 56px 32px; }
+    .ap-steps { grid-template-columns: 1fr 1fr; }
+    .ap-step:nth-child(2) { border-right: none; }
+    .ap-step:nth-child(3) { border-top: 1px solid rgba(255,255,255,0.06); }
+    .ap-step:last-child { border-top: 1px solid rgba(255,255,255,0.06); }
+    .ap-cta-section { flex-direction: column; align-items: flex-start; padding: 56px 32px; gap: 32px; }
+  }
+  @media (max-width: 560px) {
+    .ap-nav { padding: 12px 20px; }
+    .ap-hero { padding: 40px 24px 40px; }
+    .ap-hero-bg { display: none; }
+    .ap-casos { padding: 48px 24px; }
+    .ap-processo { padding: 48px 24px; }
+    .ap-steps { grid-template-columns: 1fr; }
+    .ap-step { border-right: none !important; border-top: 1px solid rgba(255,255,255,0.06); }
+    .ap-step:first-child { border-top: none; }
+    .ap-cta-section { padding: 48px 24px; }
+    .ap-hero-stats { gap: 24px; }
+  }
+</style>
+
+<!-- ══════ PÁGINA: DIREITO CIVIL ══════ -->
+<div class="area-page" id="page-civil">
+  <nav class="ap-nav">
+    <button class="ap-back" onclick="closeArea()">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><line x1="13" y1="8" x2="3" y2="8"/><polyline points="6,5 3,8 6,11"/></svg>
+      Voltar
+    </button>
+    <div class="ap-nav-logo">CSC</div>
+    <a href="#" class="ap-cta-link" onclick="closeArea(); return false;">Agendar Consulta</a>
+  </nav>
+  <div class="ap-hero">
+    <div class="ap-hero-bg">CC</div>
+    <div class="ap-hero-left">
+      <div class="ap-hero-tag">Área de Atuação</div>
+      <h1>Direito<br/><em>Civil</em></h1>
+    </div>
+    <div class="ap-hero-right">
+      <p class="ap-hero-desc">Atuamos em toda a complexidade das relações civis — contratos, responsabilidade, família e patrimônio — com estratégia que protege o que é seu.</p>
+      <div class="ap-hero-stats">
+        <div>
+          <div class="ap-stat-num">+120</div>
+          <div class="ap-stat-label">Casos resolvidos</div>
+        </div>
+        <div>
+          <div class="ap-stat-num">98%</div>
+          <div class="ap-stat-label">Êxito judicial</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ap-casos">
+    <div class="ap-section-tag">0001 — Situações que Atendemos</div>
+    <h2>Quando o <em>Direito Civil</em><br/>Protege Você</h2>
+    <div class="ap-casos-grid">
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">01</div>
+        <div class="ap-caso-title">Contratos e Inadimplência</div>
+        <p class="ap-caso-desc">Rescisão contratual, cobrança de dívidas, revisão de cláusulas abusivas e execução de obrigações descumpridas.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">02</div>
+        <div class="ap-caso-title">Família e Sucessões</div>
+        <p class="ap-caso-desc">Divórcio, guarda de filhos, pensão alimentícia, inventários e partilha de bens com mediação especializada.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">03</div>
+        <div class="ap-caso-title">Responsabilidade Civil</div>
+        <p class="ap-caso-desc">Indenizações por dano moral e material, acidentes, negligência médica e relações de consumo.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ap-processo">
+    <div class="ap-section-tag">0002 — Como Funciona</div>
+    <h2>Nosso <em>Processo</em><br/>de Atuação</h2>
+    <div class="ap-steps">
+      <div class="ap-step"><div class="ap-step-num">01</div><div class="ap-step-title">Consulta Inicial</div><p class="ap-step-desc">Escutamos seu caso em detalhes e fazemos um diagnóstico jurídico completo sem compromisso.</p></div>
+      <div class="ap-step"><div class="ap-step-num">02</div><div class="ap-step-title">Análise Estratégica</div><p class="ap-step-desc">Mapeamos os caminhos legais disponíveis e definimos a melhor estratégia para o seu objetivo.</p></div>
+      <div class="ap-step"><div class="ap-step-num">03</div><div class="ap-step-title">Atuação Processual</div><p class="ap-step-desc">Conduzimos todas as etapas judiciais ou extrajudiciais com precisão e transparência.</p></div>
+      <div class="ap-step"><div class="ap-step-num">04</div><div class="ap-step-title">Resultado e Acompanhamento</div><p class="ap-step-desc">Entregamos o resultado e mantemos acompanhamento pós-caso para garantir sua segurança jurídica.</p></div>
+    </div>
+  </div>
+  <div class="ap-cta-section">
+    <div>
+      <h2>Pronto para <em>Resolver</em><br/>seu Caso?</h2>
+    </div>
+    <p>Fale com um especialista em Direito Civil e entenda suas opções com clareza.</p>
+    <button class="ap-cta-btn" onclick="closeArea()">Agendar Consulta</button>
+  </div>
+</div>
+
+<!-- ══════ PÁGINA: DIREITO EMPRESARIAL ══════ -->
+<div class="area-page" id="page-empresarial">
+  <nav class="ap-nav">
+    <button class="ap-back" onclick="closeArea()">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><line x1="13" y1="8" x2="3" y2="8"/><polyline points="6,5 3,8 6,11"/></svg>
+      Voltar
+    </button>
+    <div class="ap-nav-logo">CSC</div>
+    <a href="#" class="ap-cta-link" onclick="closeArea(); return false;">Agendar Consulta</a>
+  </nav>
+  <div class="ap-hero">
+    <div class="ap-hero-bg">EC</div>
+    <div class="ap-hero-left">
+      <div class="ap-hero-tag">Área de Atuação</div>
+      <h1>Direito<br/><em>Empresarial</em></h1>
+    </div>
+    <div class="ap-hero-right">
+      <p class="ap-hero-desc">Estruturamos, protegemos e representamos empresas em todas as fases — da constituição societária aos litígios comerciais mais complexos.</p>
+      <div class="ap-hero-stats">
+        <div>
+          <div class="ap-stat-num">+80</div>
+          <div class="ap-stat-label">Empresas assessoradas</div>
+        </div>
+        <div>
+          <div class="ap-stat-num">15+</div>
+          <div class="ap-stat-label">Anos de experiência</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ap-casos">
+    <div class="ap-section-tag">0001 — Situações que Atendemos</div>
+    <h2>Quando o <em>Direito Empresarial</em><br/>é Essencial</h2>
+    <div class="ap-casos-grid">
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">01</div>
+        <div class="ap-caso-title">Constituição e Reestruturação</div>
+        <p class="ap-caso-desc">Abertura de empresas, alteração societária, fusões, aquisições e holding patrimonial com segurança jurídica.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">02</div>
+        <div class="ap-caso-title">Contratos Comerciais</div>
+        <p class="ap-caso-desc">Elaboração e revisão de contratos, parcerias, franquias e acordos de confidencialidade com proteção estratégica.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">03</div>
+        <div class="ap-caso-title">Litígios Empresariais</div>
+        <p class="ap-caso-desc">Disputas societárias, inadimplência comercial, recuperação de crédito e dissolução de sociedades conflituosas.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ap-processo">
+    <div class="ap-section-tag">0002 — Como Funciona</div>
+    <h2>Nosso <em>Processo</em><br/>de Atuação</h2>
+    <div class="ap-steps">
+      <div class="ap-step"><div class="ap-step-num">01</div><div class="ap-step-title">Diagnóstico Empresarial</div><p class="ap-step-desc">Avaliamos a estrutura jurídica da sua empresa e identificamos riscos e oportunidades de proteção.</p></div>
+      <div class="ap-step"><div class="ap-step-num">02</div><div class="ap-step-title">Planejamento Jurídico</div><p class="ap-step-desc">Desenhamos uma estratégia preventiva ou litigiosa alinhada aos objetivos do seu negócio.</p></div>
+      <div class="ap-step"><div class="ap-step-num">03</div><div class="ap-step-title">Execução e Representação</div><p class="ap-step-desc">Atuamos em negociações, contratos e processos com agilidade e visão comercial.</p></div>
+      <div class="ap-step"><div class="ap-step-num">04</div><div class="ap-step-title">Consultoria Contínua</div><p class="ap-step-desc">Oferecemos assessoria permanente para que decisões empresariais sejam sempre juridicamente seguras.</p></div>
+    </div>
+  </div>
+  <div class="ap-cta-section">
+    <div>
+      <h2>Proteja seu <em>Negócio</em><br/>com Estratégia</h2>
+    </div>
+    <p>Fale com um especialista em Direito Empresarial e fortaleça as bases jurídicas da sua empresa.</p>
+    <button class="ap-cta-btn" onclick="closeArea()">Agendar Consulta</button>
+  </div>
+</div>
+
+<!-- ══════ PÁGINA: DIREITO CRIMINAL ══════ -->
+<div class="area-page" id="page-criminal">
+  <nav class="ap-nav">
+    <button class="ap-back" onclick="closeArea()">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><line x1="13" y1="8" x2="3" y2="8"/><polyline points="6,5 3,8 6,11"/></svg>
+      Voltar
+    </button>
+    <div class="ap-nav-logo">CSC</div>
+    <a href="#" class="ap-cta-link" onclick="closeArea(); return false;">Agendar Consulta</a>
+  </nav>
+  <div class="ap-hero">
+    <div class="ap-hero-bg">DC</div>
+    <div class="ap-hero-left">
+      <div class="ap-hero-tag">Área de Atuação</div>
+      <h1>Direito<br/><em>Criminal</em></h1>
+    </div>
+    <div class="ap-hero-right">
+      <p class="ap-hero-desc">Defesa técnica e estratégica em todas as fases do processo penal. Quando sua liberdade está em jogo, cada decisão importa.</p>
+      <div class="ap-hero-stats">
+        <div>
+          <div class="ap-stat-num">+200</div>
+          <div class="ap-stat-label">Defesas conduzidas</div>
+        </div>
+        <div>
+          <div class="ap-stat-num">24h</div>
+          <div class="ap-stat-label">Atendimento urgente</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ap-casos">
+    <div class="ap-section-tag">0001 — Situações que Atendemos</div>
+    <h2>Quando a <em>Defesa Criminal</em><br/>é Urgente</h2>
+    <div class="ap-casos-grid">
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">01</div>
+        <div class="ap-caso-title">Prisão em Flagrante</div>
+        <p class="ap-caso-desc">Atuação imediata na audiência de custódia, pedido de liberdade e análise da legalidade da prisão.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">02</div>
+        <div class="ap-caso-title">Crimes Contra o Patrimônio</div>
+        <p class="ap-caso-desc">Defesa em casos de furto, roubo, estelionato e crimes correlatos com estratégia processual eficaz.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">03</div>
+        <div class="ap-caso-title">Crimes Econômicos e Tributários</div>
+        <p class="ap-caso-desc">Atuação em lavagem de dinheiro, sonegação fiscal e crimes contra a ordem econômica com defesa técnica especializada.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ap-processo">
+    <div class="ap-section-tag">0002 — Como Funciona</div>
+    <h2>Nosso <em>Processo</em><br/>de Defesa</h2>
+    <div class="ap-steps">
+      <div class="ap-step"><div class="ap-step-num">01</div><div class="ap-step-title">Contato Imediato</div><p class="ap-step-desc">Atendimento urgente 24h para situações de prisão, flagrante ou investigação em curso.</p></div>
+      <div class="ap-step"><div class="ap-step-num">02</div><div class="ap-step-title">Análise do Caso</div><p class="ap-step-desc">Estudo detalhado do inquérito, provas e tipificação para construção da melhor estratégia de defesa.</p></div>
+      <div class="ap-step"><div class="ap-step-num">03</div><div class="ap-step-title">Defesa Processual</div><p class="ap-step-desc">Atuação em todas as fases — inquérito, instrução, julgamento — com rigor técnico e precisão argumentativa.</p></div>
+      <div class="ap-step"><div class="ap-step-num">04</div><div class="ap-step-title">Recursos e Execução Penal</div><p class="ap-step-desc">Interposição de recursos, pedidos de habeas corpus e acompanhamento na execução da pena quando necessário.</p></div>
+    </div>
+  </div>
+  <div class="ap-cta-section">
+    <div>
+      <h2>Sua <em>Defesa</em><br/>Começa Agora</h2>
+    </div>
+    <p>Não enfrente o sistema sozinho. Fale agora com um defensor criminal experiente.</p>
+    <button class="ap-cta-btn" onclick="closeArea()">Falar com Defensor</button>
+  </div>
+</div>
+
+<!-- ══════ PÁGINA: DIREITO TRABALHISTA ══════ -->
+<div class="area-page" id="page-trabalhista">
+  <nav class="ap-nav">
+    <button class="ap-back" onclick="closeArea()">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><line x1="13" y1="8" x2="3" y2="8"/><polyline points="6,5 3,8 6,11"/></svg>
+      Voltar
+    </button>
+    <div class="ap-nav-logo">CSC</div>
+    <a href="#" class="ap-cta-link" onclick="closeArea(); return false;">Agendar Consulta</a>
+  </nav>
+  <div class="ap-hero">
+    <div class="ap-hero-bg">DT</div>
+    <div class="ap-hero-left">
+      <div class="ap-hero-tag">Área de Atuação</div>
+      <h1>Direito<br/><em>Trabalhista</em></h1>
+    </div>
+    <div class="ap-hero-right">
+      <p class="ap-hero-desc">Defendemos trabalhadores e empresas em conflitos laborais — de rescisões a litígios complexos — com foco em resultados concretos.</p>
+      <div class="ap-hero-stats">
+        <div>
+          <div class="ap-stat-num">+150</div>
+          <div class="ap-stat-label">Causas trabalhistas</div>
+        </div>
+        <div>
+          <div class="ap-stat-num">92%</div>
+          <div class="ap-stat-label">Acordo ou êxito</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ap-casos">
+    <div class="ap-section-tag">0001 — Situações que Atendemos</div>
+    <h2>Quando o <em>Direito Trabalhista</em><br/>Age por Você</h2>
+    <div class="ap-casos-grid">
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">01</div>
+        <div class="ap-caso-title">Rescisão e Verbas Trabalhistas</div>
+        <p class="ap-caso-desc">FGTS, aviso prévio, horas extras, 13º salário e demais verbas rescisórias não pagas pelo empregador.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">02</div>
+        <div class="ap-caso-title">Assédio e Danos Morais</div>
+        <p class="ap-caso-desc">Indenizações por assédio moral, sexual, discriminação e ambientes de trabalho abusivos ou insalubres.</p>
+      </div>
+      <div class="ap-caso-card">
+        <div class="ap-caso-num">03</div>
+        <div class="ap-caso-title">Acidente de Trabalho</div>
+        <p class="ap-caso-desc">Ações por doenças ocupacionais, acidentes laborais e responsabilidade civil do empregador com nexo causal.</p>
+      </div>
+    </div>
+  </div>
+  <div class="ap-processo">
+    <div class="ap-section-tag">0002 — Como Funciona</div>
+    <h2>Nosso <em>Processo</em><br/>de Atuação</h2>
+    <div class="ap-steps">
+      <div class="ap-step"><div class="ap-step-num">01</div><div class="ap-step-title">Análise da Situação</div><p class="ap-step-desc">Revisamos contratos, holerites, comunicações e documentos para identificar direitos violados.</p></div>
+      <div class="ap-step"><div class="ap-step-num">02</div><div class="ap-step-title">Estratégia de Ação</div><p class="ap-step-desc">Definimos se o caminho mais eficaz é a negociação direta, conciliação ou ação judicial na Justiça do Trabalho.</p></div>
+      <div class="ap-step"><div class="ap-step-num">03</div><div class="ap-step-title">Representação na Justiça</div><p class="ap-step-desc">Conduzimos audiências, produção de provas e sustentação oral com precisão técnica e preparo total.</p></div>
+      <div class="ap-step"><div class="ap-step-num">04</div><div class="ap-step-title">Execução e Recebimento</div><p class="ap-step-desc">Acompanhamos a execução da sentença até o efetivo recebimento dos valores devidos ao cliente.</p></div>
+    </div>
+  </div>
+  <div class="ap-cta-section">
+    <div>
+      <h2>Seus <em>Direitos</em><br/>Trabalhistas Importam</h2>
+    </div>
+    <p>Não deixe que seus direitos sejam ignorados. Fale com um especialista trabalhista agora.</p>
+    <button class="ap-cta-btn" onclick="closeArea()">Agendar Consulta</button>
+  </div>
+</div>
+
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
@@ -842,19 +1384,46 @@
     mobileMenu.classList.remove('open');
   }
 
-  // Close on outside click
   document.addEventListener('click', (e) => {
     if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
       closeMenu();
     }
   });
 
-  function toggleArea(el) {
-    document.querySelectorAll('.area-item').forEach(i => {
-      if (i !== el) i.classList.remove('active');
-    });
-    el.classList.toggle('active');
+  // ── AREA PAGE NAVIGATION ──
+  let currentPage = null;
+
+  function openArea(slug) {
+    const page = document.getElementById('page-' + slug);
+    if (!page) return;
+    currentPage = page;
+    page.classList.add('visible');
+    page.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+    // push fake history state so back button works
+    history.pushState({ area: slug }, '', '#area-' + slug);
   }
+
+  function closeArea() {
+    if (currentPage) {
+      currentPage.classList.remove('visible');
+      currentPage = null;
+    }
+    document.body.style.overflow = '';
+    // go back in history if we pushed a state
+    if (location.hash.startsWith('#area-')) {
+      history.back();
+    }
+  }
+
+  // browser back button closes the area page
+  window.addEventListener('popstate', (e) => {
+    if (currentPage) {
+      currentPage.classList.remove('visible');
+      currentPage = null;
+      document.body.style.overflow = '';
+    }
+  });
 
   // Subtle scroll reveal
   const observer = new IntersectionObserver((entries) => {
